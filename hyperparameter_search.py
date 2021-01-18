@@ -73,9 +73,10 @@ def grid_search(df, Primers, GPT2FR, hyperparameters_dict, debug=False, save_dir
     # a try-except statement so you can do control C to stop early and it will save the progress
     try:
         for index, row in tqdm(df.iterrows()):
-
+            
             #random_examples = Primers.get_n_random_examples(N)
-            best_examples = Primers.get_n_best_examples(Primers.get_prompt_response_string(row["prompt"], row["response"]), N)
+            similar_examples = Primers.get_n_similar_examples(Primers.get_prompt_response_string(row["prompt"], row["response"]), N)
+            different_examples = Primers.get_n_different_examples(Primers.get_prompt_response_string(row["prompt"], row["response"]), N)
 
             # convert row we want to generate a reflection of to a string
             query_string = GPT2FR.convert_example_to_formatted_string( row["prompt"], row["response"] )
@@ -83,7 +84,11 @@ def grid_search(df, Primers, GPT2FR, hyperparameters_dict, debug=False, save_dir
             for hp in hyperparameter_list:
                 #print(hp)
                 
-                examples = random_examples[:hp["num_shots"]] if hp["random"] else best_examples[:hp["num_shots"]]
+                examples = random_examples[:hp["num_shots"]] 
+                if hp["primer_type"] == "similar":
+                    examples = similar_examples[:hp["num_shots"]]
+                elif hp["primer_type"] == "different":
+                    examples = different_examples[:hp["num_shots"]]
 
                 # convert dataframe to list of strings
                 examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection_human"] ) \
@@ -162,7 +167,7 @@ if __name__ == "__main__":
             "temperature": [0.01, 0.1, 0.5, 1.0],
             "seed": seed,
             #"seed": np.random.randint(2020),
-            "random": False,
+            "primer_type": "random"
             "search_type": "sample"
         }
 

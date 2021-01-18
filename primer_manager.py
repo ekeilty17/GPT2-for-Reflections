@@ -30,7 +30,7 @@ class PrimerManager(object):
     def get_n_random_examples(self, n):
         return self.primer_df.sample(n=n, random_state=self.seed)
 
-    def get_n_best_examples(self, string, n):
+    def get_n_similar_examples(self, string, n):
         
         string_embedding = self.embed([string])[0]
 
@@ -40,6 +40,32 @@ class PrimerManager(object):
             similarities.append( (index, float(similarity)) )
         
         similarities = list(sorted(similarities, key=lambda t: t[1]))
+        return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
+    
+    """
+    def get_n_orthogonal_examples(self, string, n):
+        
+        string_embedding = self.embed([string])[0]
+
+        similarities = []
+        for (index, _), primer_embedding in zip(self.primer_df.iterrows(), self.primer_embeddings):
+            similarity = self.consine_similarity(string_embedding, primer_embedding)
+            similarities.append( (index, float(similarity)) )
+        
+        similarities = list(sorted(similarities, key=lambda t: t[1]))
+        return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
+    """
+
+    def get_n_different_examples(self, string, n):
+        
+        string_embedding = self.embed([string])[0]
+
+        similarities = []
+        for (index, _), primer_embedding in zip(self.primer_df.iterrows(), self.primer_embeddings):
+            similarity = self.consine_similarity(string_embedding, primer_embedding)
+            similarities.append( (index, float(similarity)) )
+        
+        similarities = list(sorted(similarities, key=lambda t: t[1], reverse=True))
         return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
 
 if __name__ == "__main__":
