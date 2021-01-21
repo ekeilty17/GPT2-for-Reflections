@@ -42,20 +42,6 @@ class PrimerManager(object):
         similarities = list(sorted(similarities, key=lambda t: t[1]))
         return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
     
-    """
-    def get_n_orthogonal_examples(self, string, n):
-        
-        string_embedding = self.embed([string])[0]
-
-        similarities = []
-        for (index, _), primer_embedding in zip(self.primer_df.iterrows(), self.primer_embeddings):
-            similarity = self.consine_similarity(string_embedding, primer_embedding)
-            similarities.append( (index, float(similarity)) )
-        
-        similarities = list(sorted(similarities, key=lambda t: t[1]))
-        return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
-    """
-
     def get_n_different_examples(self, string, n):
         
         string_embedding = self.embed([string])[0]
@@ -67,6 +53,12 @@ class PrimerManager(object):
         
         similarities = list(sorted(similarities, key=lambda t: t[1], reverse=True))
         return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
+
+    def get_similarity_score(self, string1, string2):
+        embedding = self.embed([string1, string2])
+        similarity = self.consine_similarity(embedding[0], embedding[1])
+        return float(similarity)
+
 
 if __name__ == "__main__":
     

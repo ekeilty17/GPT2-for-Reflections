@@ -24,7 +24,7 @@ if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
 
-def grid_search(df, Primers, GPT2FR, hyperparameters_dict, debug=False, save_dir="."):
+def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=20, debug=False, save_dir="."):
 
     # the logging and saving doesn't really work as well if there are multiple search types
     if "search_type" in hyperparameters_dict:
@@ -66,15 +66,17 @@ def grid_search(df, Primers, GPT2FR, hyperparameters_dict, debug=False, save_dir
     
     # calculating a static set of random examples
     N = hyperparameters_dict["num_shots"] if type(hyperparameters_dict["num_shots"]) == int else max(hyperparameters_dict["num_shots"])
-    random_examples = Primers.get_n_random_examples(N)
-
-    print(random_examples)
 
     # a try-except statement so you can do control C to stop early and it will save the progress
+    cnt = -1
     try:
         for index, row in tqdm(df.iterrows()):
             
-            #random_examples = Primers.get_n_random_examples(N)
+            cnt += 1
+            if cnt == num_rows:
+                break
+
+            random_examples = Primers.get_n_random_examples(N)
             similar_examples = Primers.get_n_similar_examples(Primers.get_prompt_response_string(row["prompt"], row["response"]), N)
             different_examples = Primers.get_n_different_examples(Primers.get_prompt_response_string(row["prompt"], row["response"]), N)
 
@@ -84,30 +86,27 @@ def grid_search(df, Primers, GPT2FR, hyperparameters_dict, debug=False, save_dir
             for hp in hyperparameter_list:
                 #print(hp)
                 
-                examples = random_examples[:hp["num_shots"]] 
-                if hp["primer_type"] == "similar":
-                    examples = similar_examples[:hp["num_shots"]]
-                elif hp["primer_type"] == "different":
-                    examples = different_examples[:hp["num_shots"]]
+                for primer_type, examples in zip(["random", "similar", "different"], [random_examples, similar_examples, different_examples]):
 
-                # convert dataframe to list of strings
-                examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection_human"] ) \
-                                for _, ex_row in examples.iterrows()]
+                    # convert dataframe to list of strings
+                    examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection_human"] ) \
+                                    for _, ex_row in examples.iterrows()]
 
-                # generating reflection
-                gpt2_input = "\n\n".join(examples + [query_string])
+                    # generating reflection
+                    gpt2_input = "\n\n".join(examples + [query_string])
 
-                # generating reflections
-                print("Generating Reflection...")
-                GPT2FR.update_hyperparameters(hp, hp["search_type"])
-                generated_reflections = GPT2FR(gpt2_input)
+                    # generating reflections
+                    print("Generating Reflection...")
+                    GPT2FR.update_hyperparameters(hp, hp["search_type"])
+                    generated_reflections = GPT2FR(gpt2_input)
 
-                total_hp = hp.copy()
-                total_hp.update(GPT2FR.hyperparameters)
+                    total_hp = hp.copy()
+                    total_hp.update(GPT2FR.hyperparameters)
+                    total_hp["primer_type"] = primer_type
 
-                # saving to dictionary
-                hp_str = str(total_hp)
-                generated_reflection_by_hyperparameter[hp_str].append(generated_reflections)
+                    # saving to dictionary
+                    hp_str = str(total_hp)
+                    generated_reflection_by_hyperparameter[hp_str].append(generated_reflections)
                 
             # logging output
             NUM_ITERATIONS = 1                  # number of iterations until we print results
@@ -159,32 +158,33 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    for seed in [2020, 912, 1554]:
-        hyperparameters = {
-            "num_shots": 5,
-            "repetition_penalty": 1.0,
-            "top_k": [0, 10, 100],
-            "temperature": [0.01, 0.1, 0.5, 1.0],
-            "seed": seed,
-            #"seed": np.random.randint(2020),
-            "primer_type": "random",
-            "search_type": "sample"
-        }
+    num_rows = 2
+    num_seeds = 2
 
-        df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
+    hyperparameters = {
+        "num_shots": 5,
+        "repetition_penalty": 1.0,
+        "top_k": 0,
+        "temperature": 1.0,
+        "seed": list(range(100, 100*num_seeds+100, 100)),
+        #"seed": np.random.randint(2020),
+        "search_type": "sample"
+    }
 
-        print("\nLoading Primers...")
-        Primers = PrimerManager(seed=hyperparameters["seed"])
+    df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
 
-        print("\nLoading model...")
-        GPT2FR = GPT2ForReflections(model_name=args.model)
+    print("\nLoading Primers...")
+    Primers = PrimerManager()
 
-        
-        print("\nRunning hyperparameter search...")
-        SAVE_DIR = "generated_data"
-        df = grid_search(df, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+    print("\nLoading model...")
+    GPT2FR = GPT2ForReflections(model_name=args.model)
 
-        print("\nSaving to csv...")
-        primer_type = "RANDOM" if hyperparameters["random"] else "SIMILAR"
-        df.to_csv(f"{SAVE_DIR}/brute_force_{primer_type}_{hyperparameters['seed']}.csv")
-        #df.to_csv(f"{SAVE_DIR}/brute_force_RANDOM{k}.csv")
+    
+    print("\nRunning hyperparameter search...")
+    SAVE_DIR = "generated_data"
+    df = variance_test(df, Primers, GPT2FR, hyperparameters, num_rows=num_rows, debug=args.debug, save_dir=SAVE_DIR)
+
+    print("\nSaving to csv...")
+    primer_type = "RANDOM" if hyperparameters["random"] else "SIMILAR"
+    df.to_csv(f"{SAVE_DIR}/variance_test_{num_rows}x{num_seeds}.csv")
+    #df.to_csv(f"{SAVE_DIR}/brute_force_RANDOM{k}.csv")
