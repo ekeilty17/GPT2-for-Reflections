@@ -47,10 +47,14 @@ def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=20, debug=
     generated_reflection_by_hyperparameter = {}
     for hp in hyperparameter_list:
         GPT2FR.update_hyperparameters(hp, hp["search_type"])
-        total_hp = hp.copy()
-        total_hp.update(GPT2FR.hyperparameters)
-        hp_str = str(total_hp)
-        generated_reflection_by_hyperparameter[hp_str] = []
+        
+
+        for primer_type in ["random", "similiar", "different"]:
+            total_hp = hp.copy()
+            total_hp.update(GPT2FR.hyperparameters)
+            total_hp["primer_type"] = primer_type
+            hp_str = str(total_hp)
+            generated_reflection_by_hyperparameter[hp_str] = []
 
     print("Hyperparameter set...")
     for hp in generated_reflection_by_hyperparameter:
