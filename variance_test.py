@@ -49,7 +49,7 @@ def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=20, debug=
         GPT2FR.update_hyperparameters(hp, hp["search_type"])
         
 
-        for primer_type in ["random", "similiar", "different"]:
+        for primer_type in ["random", "similar", "different"]:
             total_hp = hp.copy()
             total_hp.update(GPT2FR.hyperparameters)
             total_hp["primer_type"] = primer_type
