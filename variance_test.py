@@ -24,7 +24,7 @@ if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
 
-def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=20, debug=False, save_dir="."):
+def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=None, debug=False, save_dir="."):
 
     # the logging and saving doesn't really work as well if there are multiple search types
     if "search_type" in hyperparameters_dict:
@@ -77,7 +77,7 @@ def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=20, debug=
         for index, row in tqdm(df.iterrows()):
             
             cnt += 1
-            if cnt == num_rows:
+            if (not num_rows is None) and (cnt == num_rows):
                 break
 
             random_examples = Primers.get_n_random_examples(N)
@@ -162,8 +162,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    num_rows = 2
-    num_seeds = 2
+    num_rows = None
+    num_seeds = 50
 
     hyperparameters = {
         "num_shots": 5,
@@ -189,6 +189,4 @@ if __name__ == "__main__":
     df = variance_test(df, Primers, GPT2FR, hyperparameters, num_rows=num_rows, debug=args.debug, save_dir=SAVE_DIR)
 
     print("\nSaving to csv...")
-    primer_type = "RANDOM" if hyperparameters["random"] else "SIMILAR"
     df.to_csv(f"{SAVE_DIR}/variance_test_{num_rows}x{num_seeds}.csv")
-    #df.to_csv(f"{SAVE_DIR}/brute_force_RANDOM{k}.csv")
