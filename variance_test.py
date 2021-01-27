@@ -24,7 +24,7 @@ if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
 
-def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=None, debug=False, save_dir="."):
+def variance_test(df, Primers, GPT2FR, hyperparameters_dict, start_row=0, num_rows=None, debug=False, save_dir="."):
 
     # the logging and saving doesn't really work as well if there are multiple search types
     if "search_type" in hyperparameters_dict:
@@ -76,6 +76,9 @@ def variance_test(df, Primers, GPT2FR, hyperparameters_dict, num_rows=None, debu
     try:
         for index, row in tqdm(df.iterrows()):
             
+            if index < start_row:
+                continue
+
             cnt += 1
             if (not num_rows is None) and (cnt == num_rows):
                 break
@@ -162,8 +165,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
+    start_row = 0
     num_rows = None
-    num_seeds = 50
+    num_seeds = 1
 
     hyperparameters = {
         "num_shots": 5,
@@ -172,7 +176,9 @@ if __name__ == "__main__":
         "temperature": 1.0,
         "seed": list(range(100, 100*num_seeds+100, 100)),
         #"seed": np.random.randint(2020),
-        "search_type": "sample"
+        "search_type": "beam",
+        "num_beams": 20,
+        "num_return_sequences": 20
     }
 
     df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
@@ -186,7 +192,8 @@ if __name__ == "__main__":
     
     print("\nRunning hyperparameter search...")
     SAVE_DIR = "generated_data"
-    df = variance_test(df, Primers, GPT2FR, hyperparameters, num_rows=num_rows, debug=args.debug, save_dir=SAVE_DIR)
+    df = variance_test( df, Primers, GPT2FR, hyperparameters, 
+                        start_row=start_row, num_rows=num_rows, debug=args.debug, save_dir=SAVE_DIR)
 
     print("\nSaving to csv...")
     df.to_csv(f"{SAVE_DIR}/variance_test_{num_rows}x{num_seeds}.csv")
