@@ -21,8 +21,8 @@ class GPT2ForReflections(object):
         self.default_hyperparameters = {
             "max_len": 50,                  # default: N/A
             "repetition_penalty": 1.0,      # default: 1.0
-            "num_beam": 5,                  # default: 1
-            "num_return_sequences": 1,      # default: 1 (note: must be <= num_beam)
+            "num_beams": 5,                 # default: 1
+            "num_return_sequences": 1,      # default: 1 (note: must be <= num_beams)
             "no_repeat_ngram_size": 0,      # default: 0
             "early_stopping": True,         # default: False
             "do_sample": True,              # default: False
@@ -66,22 +66,22 @@ class GPT2ForReflections(object):
         self.hyperparameters = {hp: self.hyperparameters[hp] for hp in hp_list}
     
     def do_beam(self):
-        # check that num_return_sequences <= num_beam
-        if "num_beam" in self.user_hyperparameters and "num_return_sequences" in self.user_hyperparameters:
-            assert( self.user_hyperparameters["num_beam"] >= self.user_hyperparameters["num_return_sequences"] )
+        # check that num_return_sequences <= num_beams
+        if "num_beams" in self.user_hyperparameters and "num_return_sequences" in self.user_hyperparameters:
+            assert( self.user_hyperparameters["num_beams"] >= self.user_hyperparameters["num_return_sequences"] )
         # If the user only changes num_return_sequences
         elif "num_return_sequences" in self.user_hyperparameters:
             # make sure num_beams >= to it
-            if self.user_hyperparameters["num_return_sequences"] > self.default_hyperparameters["num_beam"]:
+            if self.user_hyperparameters["num_return_sequences"] > self.default_hyperparameters["num_beams"]:
                 # else update num_beams to match num_return_sequences
-                self.default_hyperparameters["num_beam"] = self.user_hyperparameters["num_return_sequences"]
+                self.default_hyperparameters["num_beams"] = self.user_hyperparameters["num_return_sequences"]
         
         # update default hp with user's hp
         self.hyperparameters = self.default_hyperparameters.copy()
         self.hyperparameters.update(self.user_hyperparameters)
 
         # only include the relevant hp's
-        hp_list = ["max_len", "repetition_penalty", "num_beam", "num_return_sequences", "no_repeat_ngram_size", "early_stopping"]
+        hp_list = ["max_len", "repetition_penalty", "num_beams", "num_return_sequences", "no_repeat_ngram_size", "early_stopping"]
         self.hyperparameters = {hp: self.hyperparameters[hp] for hp in hp_list}
         
 
