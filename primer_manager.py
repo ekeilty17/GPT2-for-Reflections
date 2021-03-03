@@ -9,10 +9,10 @@ tf.get_logger().setLevel(logging.ERROR)
 
 class PrimerManager(object):
 
-    def __init__(self, path='static_data/filtered_primers.csv', seed=None):
-        self.primer_df = pd.read_csv(path, index_col=0)
+    def __init__(self, primer_df, seed=None):
+        self.primer_df = primer_df
         self.embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
-        
+
         # I pre-process the embeddings to save computation time
         prompt_response_strings = [self.get_prompt_response_string(row['prompt'], row['response']) for index, row in self.primer_df.iterrows()]
         self.primer_embeddings = self.embed(prompt_response_strings)
@@ -28,10 +28,12 @@ class PrimerManager(object):
         return tf.keras.losses.cosine_similarity(t1, t2, axis=axis)
 
     def get_n_random_examples(self, n):
+        n = min(n, len(self.primer_df))
         return self.primer_df.sample(n=n, random_state=self.seed)
 
     def get_n_similar_examples(self, string, n):
-        
+        n = min(n, len(self.primer_df))
+
         string_embedding = self.embed([string])[0]
 
         similarities = []
@@ -43,7 +45,8 @@ class PrimerManager(object):
         return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
     
     def get_n_different_examples(self, string, n):
-        
+        n = min(n, len(self.primer_df))
+
         string_embedding = self.embed([string])[0]
 
         similarities = []

@@ -116,6 +116,7 @@ class GPT2ForReflections(object):
                                             pad_token_id=self.tokenizer.eos_token_id,
                                             **self.hyperparameters
                                     )
+        print(summary_ids.size())
         output = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
         return output
 
@@ -147,9 +148,19 @@ class GPT2ForReflections(object):
 
 if __name__ == "__main__":
 
+    """ This illustrates how to use the above class """
+
     # initializing model
     GPT2FR = GPT2ForReflections(model_name="gpt2")
 
+    # specifying hyperparameters
+    hyperparameters = {
+        "num_shots": 5,
+        "search_type": "beam",
+        "num_beams": 5,
+        "num_return_sequences": 5
+    }
+    GPT2FR.update_hyperparameters(hyperparameters, hyperparameters["search_type"])
 
     # get random prompt-response pair
     import pandas as pd

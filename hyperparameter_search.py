@@ -174,7 +174,8 @@ if __name__ == "__main__":
         df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
 
         print("\nLoading Primers...")
-        Primers = PrimerManager(seed=hyperparameters["seed"])
+        primer_df = pd.read_csv('static_data/filtered_golden_primers.csv', index_col=0)
+        Primers = PrimerManager(primer_df, seed=hyperparameters["seed"])
 
         print("\nLoading model...")
         GPT2FR = GPT2ForReflections(model_name=args.model)
