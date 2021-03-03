@@ -115,9 +115,9 @@ class GPT2ForReflections(object):
                                             bos_token_id=self.tokenizer.bos_token_id,
                                             pad_token_id=self.tokenizer.eos_token_id,
                                             **self.hyperparameters
-                                    )
-        print(summary_ids.size())
-        output = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+        )
+
+        output = [self.tokenizer.decode(ids, skip_special_tokens=True) for ids in summary_ids]
         return output
 
     @staticmethod
@@ -141,10 +141,10 @@ class GPT2ForReflections(object):
         return lines[0]
 
     def generate(self, text):
-        output = self.get_output(text)
-        generated_output = self.get_generated_output(text, output)
-        generated_output = self.clean_reflection(generated_output)
-        return generated_output
+        raw_outputs = self.get_output(text)
+        generated_outputs = [self.get_generated_output(text, output) for output in raw_outputs]
+        generated_outputs = [self.clean_reflection(output) for output in generated_outputs]
+        return generated_outputs
 
 if __name__ == "__main__":
 
@@ -158,7 +158,8 @@ if __name__ == "__main__":
         "num_shots": 5,
         "search_type": "beam",
         "num_beams": 5,
-        "num_return_sequences": 5
+        "num_return_sequences": 5,
+        "no_repeat_ngram_size": 2
     }
     GPT2FR.update_hyperparameters(hyperparameters, hyperparameters["search_type"])
 
