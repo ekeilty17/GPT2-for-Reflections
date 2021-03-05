@@ -142,7 +142,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"])
     
     # doing the "k-fold" cross validation
-    for Type in Types:
+    for Type in tqdm(Types):
         if Type != 11:
             continue 
         

@@ -49,9 +49,23 @@ class ReflectionQualityClassifier(object):
     def get_prompt_response_string(prompt, response):
         return prompt + ' ' + response
 
+    def convert_example_to_feature(self, s1, s2):
+        # combine step for tokenization, WordPiece vector mapping, adding special tokens as well as truncating reviews longer than the max length
+        return 
+
+    # map to the expected input to TFBertForSequenceClassification, see here 
+    @staticmethod
+    def _to_dict(input_ids, attention_masks, token_type_ids):
+        return {
+                "input_ids": input_ids,
+                "attention_mask": attention_masks,
+                "token_type_ids": token_type_ids,       # don't actually use these, but sometimes they are necessary
+            }
+
     def preprocess_input(self, text_a, text_b):
 
         max_length = max([len(self.get_tokens(self.tokenizer, s1 + ' ' + s2)) for s1, s2 in zip(text_a, text_b)])
+        #max_length = 512
 
         input_ids = []
         attention_masks = []
@@ -66,21 +80,17 @@ class ReflectionQualityClassifier(object):
                                     truncation = True,              
                                     return_attention_mask = True,   # Construct attn. masks
                                     return_token_type_ids = True,   # sometimes these are necessary
-                                    return_tensors = 'pt',          # Return pytorch tensors
+                                    #return_tensors = 'pt',          # Return pytorch tensors
                                 )
             
             input_ids.append(encoded_dict['input_ids'])
             attention_masks.append(encoded_dict['attention_mask'])
             token_type_ids.append(encoded_dict['token_type_ids'])
-        
-        input_ids = torch.cat(input_ids, dim=0)
-        attention_masks = torch.cat(attention_masks, dim=0)
-        token_type_ids = torch.cat(token_type_ids, dim=0)
 
-        return input_ids, attention_masks, token_type_ids
+        return tf.data.Dataset.from_tensor_slices((input_ids, attention_masks, token_type_ids)).map(self._to_dict)
 
 
-    def predict(self, prompts, responses, reflections):
+    def predict(self, prompts, responses, reflections, batch_size=16):
         prompts = list(prompts)
         responses = list(responses)
         reflections = list(reflections)
@@ -88,18 +98,21 @@ class ReflectionQualityClassifier(object):
         text_a = [self.get_prompt_response_string(prompt, response) for prompt, response in zip(prompts, responses)]
         text_b = reflections
 
-        input_ids, attention_masks, token_type_ids = self.preprocess_input(text_a, text_b)
+        # to_predict is a TensorFlow object containing input_ids, attention_masks, and token_type_ids
+        to_predict = self.preprocess_input(text_a, text_b)
 
-        logits = self.model.predict([
-            input_ids.numpy(), 
-            attention_masks.numpy()
-        ])[0]
+        # calculating predictions using a batch size of batch_size
+        predictions = self.model.predict(to_predict.batch(batch_size), verbose=True)
 
-        print(logits.shape)
+        # predictions is a TensorFlow object, so just extracting the data we care about
+        logits = predictions.logits
 
-        labels = np.argmin(logits, axis=1)
+        probs = tf.nn.softmax(logits)           # This is shape (N, 2) with the first column being P(label = 0) and second column being P(label = 1)
+        labels = tf.math.argmax(probs, 1)       # the label is the argmax of each row
 
-        return labels
+        confidence = probs[:, 1]                # "confidence" is a range between 0 and 1 while labels are boolean
+
+        return confidence.numpy(), labels.numpy()
 
 if __name__ == "__main__":
     
@@ -112,5 +125,6 @@ if __name__ == "__main__":
 
     MODEL_PATH = "../distilbert_model_reflection_extended.08-0.85.hdf5"
     RQC = ReflectionQualityClassifier(MODEL_PATH)
-    labels = RQC.predict(prompts, responses, reflections)
+    confidence, labels = RQC.predict(prompts, responses, reflections)
+    print(confidence)
     print(labels)
