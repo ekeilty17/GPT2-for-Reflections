@@ -151,6 +151,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"] + list(hyperparameters.keys()))
     
     # doing the "k-fold" cross validation
+    """
     for Type in tqdm(Types):
         print("Type:", Type)
         
@@ -170,3 +171,24 @@ if __name__ == "__main__":
         df = df.append(output_df, ignore_index=True)
     
     df.to_csv(f"{SAVE_DIR}/Type_k_fold_{primer_file}")
+    """
+
+    for Topic in tqdm(Topic):
+        print("Topic:", Topic)
+        
+        primer_set = primer_df[ primer_df["Topic"] != Topic ]
+        data_set = primer_df[ primer_df["Topic"] == Topic ]
+
+        primer_set = primer_set[["prompt", "response", "reflection"]].reset_index()
+        data_set = data_set[["Type", "Topic", "prompt", "response"]].drop_duplicates().reset_index()
+
+        # actually loading primers
+        Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
+        
+        # running test
+        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+
+        # saving output
+        df = df.append(output_df, ignore_index=True)
+    
+    df.to_csv(f"{SAVE_DIR}/Topic_k_fold_{primer_file}")
