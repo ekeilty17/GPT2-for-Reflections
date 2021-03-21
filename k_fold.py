@@ -140,12 +140,12 @@ if __name__ == "__main__":
     #print(Topics)
 
     SAVE_DIR = "generated_data"
-    df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"])
+    df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"] + list(hyperparameters.keys()))
     
     # doing the "k-fold" cross validation
     for Type in tqdm(Types):
-        if Type != 11:
-            continue 
+
+        print("Topic:", Topic)
         
         primer_set = primer_df[ primer_df["Type"] != Type ]
         data_set = primer_df[ primer_df["Type"] == Type ]
