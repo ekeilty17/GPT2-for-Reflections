@@ -14,6 +14,7 @@ import itertools
 import ast
 
 import argparse
+import traceback
 
 # setting global seed for reproducability
 INIT_SEED = 100
@@ -61,21 +62,23 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
                 print("Generating Reflection...")
                 GPT2FR.update_hyperparameters(hyperparameters, hyperparameters["search_type"])
                 generated_reflections = GPT2FR(gpt2_input)
-
+                
                 total_hp = hyperparameters.copy()
                 total_hp.update(GPT2FR.hyperparameters)
-
-                # saving to dictionary
-                hp_str = str(total_hp)
-                output_df = output_df.append({
-                    "Type": row["Type"], 
-                    "Topic": row["Topic"], 
-                    "prompt": row["prompt"], 
-                    "response": row["response"], 
-                    "primer_type": primer_type, 
-                    "generated_reflection": generated_reflection,
-                    **hyperparameters
-                }, ignore_index=True)
+                
+                for i, generated_reflection in enumerate(generated_reflections, 1):
+                    # saving to dictionary
+                    hp_str = str(total_hp)
+                    output_df = output_df.append({
+                        "Type": row["Type"], 
+                        "Topic": row["Topic"], 
+                        "prompt": row["prompt"], 
+                        "response": row["response"], 
+                        "primer_type": primer_type, 
+                        "generated_reflection": generated_reflection,
+                        "beam": i,
+                        **hyperparameters
+                    }, ignore_index=True)
                 
                 # logging output
                 if index % NUM_ITERATIONS == 0:
@@ -86,7 +89,7 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
                     Log += log_print(query_string)
                     Log += log_print()
                     
-                    Log += log_print(generated_reflection)
+                    Log += log_print(str(generated_reflections))
                     Log += log_print()
 
     except (KeyboardInterrupt, SystemExit):
@@ -96,6 +99,7 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
         Log += "ERROR" + "\n"
         Log += str(e) + "\n"
         print()
+        traceback.print_exc()
         raise Exception(e)
 
     # saving log file
@@ -115,10 +119,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     hyperparameters = {
-        "num_shots": 5,
+        "num_shots": 3,
         "repetition_penalty": 1.0,
-        "top_k": 10,
-        "temperature": 0.1,
+        "top_k": 50,
+        "temperature": 0.5,
         "seed": INIT_SEED,
         "search_type": "sample"
     }
@@ -127,7 +131,11 @@ if __name__ == "__main__":
     GPT2FR = GPT2ForReflections(model_name=args.model)
 
     print("\nLoading Primers...")
-    primer_df = pd.read_csv('static_data/filtered_golden_primers.csv', index_col=0)
+    primer_file = "simple_reflections_gpt2.csv"
+    #primer_file = "complex_reflections_gpt2.csv"
+    #primer_file = "simple_reflections_human.csv"
+    #primer_file = "complex_reflections_human.csv"
+    primer_df = pd.read_csv(f'static_data/{primer_file}', index_col=0)
 
     # getting list of all Types and all Topics
     Types = set()
@@ -144,13 +152,12 @@ if __name__ == "__main__":
     
     # doing the "k-fold" cross validation
     for Type in tqdm(Types):
-
-        print("Topic:", Topic)
+        print("Type:", Type)
         
         primer_set = primer_df[ primer_df["Type"] != Type ]
         data_set = primer_df[ primer_df["Type"] == Type ]
 
-        primer_set = primer_set[["prompt", "response", "reflection_human"]].reset_index()
+        primer_set = primer_set[["prompt", "response", "reflection"]].reset_index()
         data_set = data_set[["Type", "Topic", "prompt", "response"]].drop_duplicates().reset_index()
 
         # actually loading primers
@@ -162,4 +169,4 @@ if __name__ == "__main__":
         # saving output
         df = df.append(output_df, ignore_index=True)
     
-    df.to_csv(f"{SAVE_DIR}/Type_k_fold.csv")
+    df.to_csv(f"{SAVE_DIR}/Type_k_fold_{primer_file}")
