@@ -49,17 +49,13 @@ class ReflectionQualityClassifier(object):
     def get_prompt_response_string(prompt, response):
         return prompt + ' ' + response
 
-    def convert_example_to_feature(self, s1, s2):
-        # combine step for tokenization, WordPiece vector mapping, adding special tokens as well as truncating reviews longer than the max length
-        return 
-
     # map to the expected input to TFBertForSequenceClassification, see here 
     @staticmethod
     def _to_dict(input_ids, attention_masks, token_type_ids):
         return {
                 "input_ids": input_ids,
                 "attention_mask": attention_masks,
-                "token_type_ids": token_type_ids,       # don't actually use these, but sometimes they are necessary
+                "token_type_ids": token_type_ids,       # don't actually use these, but sometimes they are useful
             }
 
     def preprocess_input(self, text_a, text_b):
@@ -77,10 +73,10 @@ class ReflectionQualityClassifier(object):
                                     #padding='longest',             # Pad to longest input in batch
                                     padding = 'max_length',         # Pad to max sentence length
                                     max_length = max_length,   
-                                    truncation = True,              
+                                    truncation = True,              # If the input is too long (> 512) then it just truncates it instead of throwing an error
                                     return_attention_mask = True,   # Construct attn. masks
                                     return_token_type_ids = True,   # sometimes these are necessary
-                                    #return_tensors = 'pt',          # Return pytorch tensors
+                                    #return_tensors = 'pt',          # Return pytorch tensors, I think default is TF tensor
                                 )
             
             input_ids.append(encoded_dict['input_ids'])

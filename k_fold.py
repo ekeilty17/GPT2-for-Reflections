@@ -28,7 +28,7 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
     NUM_ITERATIONS = 1                  # number of iterations until we print results
 
     Log = ""
-    output_df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"])
+    output_df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"] + list(hyperparameters.keys()))
     try:
         for index, row in tqdm(df.iterrows()):
 
@@ -51,7 +51,7 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
             for examples, primer_type in zip([random_examples, similar_examples, different_examples], ["random", "similar", "different"]):
 
                 # convert dataframe to list of strings
-                examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection_human"] ) \
+                examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
                                 for _, ex_row in examples.iterrows()]
 
                 # generating reflection
@@ -73,7 +73,8 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
                     "prompt": row["prompt"], 
                     "response": row["response"], 
                     "primer_type": primer_type, 
-                    "generated_reflection": generated_reflection
+                    "generated_reflection": generated_reflection,
+                    **hyperparameters
                 }, ignore_index=True)
                 
                 # logging output

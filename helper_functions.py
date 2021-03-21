@@ -9,7 +9,7 @@ def generate_reflection(prompt, response, Primers, GPT2FR, perm='default'):
     # Getting primers
     query_string = GPT2FR.convert_example_to_formatted_string(prompt, response)
     primer_examples = Primers.get_n_best_examples(query_string, num_shots)
-    primer_examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection_human"] ) \
+    primer_examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["human"] ) \
                             for _, ex_row in primer_examples.iterrows()]
 
     # Getting gpt2 input
