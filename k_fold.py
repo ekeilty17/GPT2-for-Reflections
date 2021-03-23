@@ -173,7 +173,7 @@ if __name__ == "__main__":
     df.to_csv(f"{SAVE_DIR}/Type_k_fold_{primer_file}")
     """
 
-    for Topic in tqdm(Topic):
+    for Topic in tqdm(Topics):
         print("Topic:", Topic)
         
         primer_set = primer_df[ primer_df["Topic"] != Topic ]
