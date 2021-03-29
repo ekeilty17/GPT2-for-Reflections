@@ -138,7 +138,7 @@ class GPT2ForReflections(object):
     @staticmethod
     def clean_reflection(generated_reflection):
         lines = generated_reflection.split('\n')
-        return lines[0]
+        return lines[0].replace(u'\xa0', u'')
 
     def generate(self, text):
         raw_outputs = self.get_output(text)
