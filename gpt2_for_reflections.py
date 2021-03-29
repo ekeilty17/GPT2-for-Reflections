@@ -122,9 +122,9 @@ class GPT2ForReflections(object):
 
     @staticmethod
     def convert_example_to_formatted_string(prompt, response, reflection='', delimiter='\n'):
-        out  = f"Interviewer: {prompt}{delimiter}"
-        out += f"Client: {response}{delimiter}"
-        out += f"Reflection: {reflection}"
+        out  = f"Interviewer: {prompt.strip()}{delimiter}"
+        out += f"Client: {response.strip()}{delimiter}"
+        out += f"Reflection: {reflection.strip()}"
         return out
     
     @staticmethod
