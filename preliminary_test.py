@@ -23,7 +23,7 @@ np.random.seed(INIT_SEED)
 if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
-def static_primer_set(df, primer_df, GPT2FR, hyperparameters, debug=False, save_dir="."):
+def static_primer_set(df, primer_df, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
 
     N = hyperparameters["num_shots"]
     NUM_ITERATIONS = 1                  # number of iterations until we print results
@@ -45,46 +45,49 @@ def static_primer_set(df, primer_df, GPT2FR, hyperparameters, debug=False, save_
             examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
                             for _, ex_row in primer_df.iterrows()]
 
-            # convert row we want to generate a reflection of to a string
-            query_string = GPT2FR.convert_example_to_formatted_string( row["prompt"], row["response"] )
+            for _ in range(permutations):
+                examples = examples[1:] + [examples[0]]
 
-            # generating reflection
-            gpt2_input = "\n\n".join(examples + [query_string])
+                # convert row we want to generate a reflection of to a string
+                query_string = GPT2FR.convert_example_to_formatted_string( row["prompt"], row["response"] )
 
-            # generating reflections
-            print("Generating Reflection...")
-            GPT2FR.update_hyperparameters(hyperparameters, hyperparameters["search_type"])
-            generated_reflections = GPT2FR(gpt2_input)
-            
-            total_hp = hyperparameters.copy()
-            total_hp.update(GPT2FR.hyperparameters)
-            
-            for i, generated_reflection in enumerate(generated_reflections, 1):
-                # saving to dictionary
-                hp_str = str(total_hp)
-                output_df = output_df.append({
-                    "Type": row["Type"], 
-                    "Topic": row["Topic"], 
-                    "prompt": row["prompt"], 
-                    "response": row["response"], 
-                    "primer_type": "none", 
-                    "primers": "\n\n".join(examples),
-                    "gpt2_input": gpt2_input,
-                    "generated_reflection": generated_reflection,
-                    "beam": i,
-                    **hyperparameters
-                }, ignore_index=True)
+                # generating reflection
+                gpt2_input = "\n\n".join(examples + [query_string])
+
+                # generating reflections
+                print("Generating Reflection...")
+                GPT2FR.update_hyperparameters(hyperparameters, hyperparameters["search_type"])
+                generated_reflections = GPT2FR(gpt2_input)
                 
-            # logging output
-            if index % NUM_ITERATIONS == 0:
-                for i, example in enumerate(examples):
-                    Log += log_print(f"{i+1} {example}")
+                total_hp = hyperparameters.copy()
+                total_hp.update(GPT2FR.hyperparameters)
                 
-                Log += log_print(query_string)
-                Log += log_print()
-                
-                Log += log_print(str(generated_reflections))
-                Log += log_print()
+                for i, generated_reflection in enumerate(generated_reflections, 1):
+                    # saving to dictionary
+                    hp_str = str(total_hp)
+                    output_df = output_df.append({
+                        "Type": row["Type"], 
+                        "Topic": row["Topic"], 
+                        "prompt": row["prompt"], 
+                        "response": row["response"], 
+                        "primer_type": "none", 
+                        "primers": "\n\n".join(examples),
+                        "gpt2_input": gpt2_input,
+                        "generated_reflection": generated_reflection,
+                        "beam": i,
+                        **hyperparameters
+                    }, ignore_index=True)
+                    
+                # logging output
+                if index % NUM_ITERATIONS == 0:
+                    for i, example in enumerate(examples):
+                        Log += log_print(f"{i+1} {example}")
+                    
+                    Log += log_print(query_string)
+                    Log += log_print()
+                    
+                    Log += log_print(str(generated_reflections))
+                    Log += log_print()
 
     except (KeyboardInterrupt, SystemExit):
         # This way the code will still save the data even if an interrupt occurs
@@ -160,7 +163,7 @@ def perfect_preformance(df, GPT2FR, hyperparameters, debug=False, save_dir="."):
                         "gpt2_input": gpt2_input,
                         "generated_reflection": generated_reflection,
                         "beam": i,
-                        "number_primers": k,
+                        "number_primers": int(k),
                         **hyperparameters
                     }, ignore_index=True)
                     break
@@ -191,8 +194,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     hyperparameters = {
-        "num_shots": 0,
-        "seed": INIT_SEED,
+        "num_shots": 5,
+        "seed": [INIT_SEED, INIT_SEED+1, INIT_SEED+2],
         "search_type": "greedy"
     }
 
@@ -213,15 +216,15 @@ if __name__ == "__main__":
 
     #primer_file = "simple_reflections_gpt2.csv"
     #primer_file = "complex_reflections_gpt2.csv"
-    primer_file = "simple_reflections_human.csv"
+    #primer_file = "simple_reflections_human.csv"
     #primer_file = "complex_reflections_human.csv"
-    #primer_file = "token_examples.csv"
+    primer_file = "token_examples.csv"
     data_set = pd.read_csv(f'static_data/{primer_file}', index_col=0)
 
-    primer_df = pd.DataFrame(columns=["prompt", "response", "reflection"])
+    primer_df = pd.read_csv(f'static_data/simple_reflections_human.csv', index_col=0).head(5)
 
     SAVE_DIR = "generated_data"
-    #df = static_primer_set(data_set, primer_df, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
-    df = perfect_preformance(data_set, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+    #df = perfect_preformance(data_set, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+    df = static_primer_set(data_set, primer_df, GPT2FR, hyperparameters, permutations=3, debug=args.debug, save_dir=SAVE_DIR)
 
     df.to_csv(f"{SAVE_DIR}/perfect_preformance_{primer_file}")
