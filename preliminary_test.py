@@ -67,9 +67,9 @@ def static_primer_set(df, primer_df, GPT2FR, hyperparameters, debug=False, save_
                     "Topic": row["Topic"], 
                     "prompt": row["prompt"], 
                     "response": row["response"], 
-                    "primer_type": primer_type, 
+                    "primer_type": "no_primers", 
                     "primers": "\n\n".join(examples),
-                    "gpt2_input": gpt2_input.
+                    "gpt2_input": gpt2_input,
                     "generated_reflection": generated_reflection,
                     "beam": i,
                     **hyperparameters
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     #primer_file = "complex_reflections_human.csv"
     data_set = pd.read_csv(f'static_data/{primer_file}', index_col=0)
 
-    primer_df = df.DataFrame(columns=["prompt", "response", "reflection"])
+    primer_df = pd.DataFrame(columns=["prompt", "response", "reflection"])
 
     SAVE_DIR = "generated_data"
-    df = generate_reflections(data_set, primer_df, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+    df = static_primer_set(data_set, primer_df, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
