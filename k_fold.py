@@ -23,7 +23,7 @@ np.random.seed(INIT_SEED)
 if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
-def k_fold(df, Primers, GPT2FR, hyperparameters, debug=False, save_dir="."):
+def k_fold(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
 
     N = hyperparameters["num_shots"]
     NUM_ITERATIONS = 1                  # number of iterations until we print results
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
         
         # running test
-        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, permutations=5, debug=args.debug, save_dir=SAVE_DIR)
 
         # saving output
         df = df.append(output_df, ignore_index=True)
