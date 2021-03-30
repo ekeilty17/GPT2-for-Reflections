@@ -137,10 +137,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     hyperparameters = {
-        "num_shots": 3,
+        "num_shots": 5,
         "repetition_penalty": 1.0,
-        "top_k": 50,
-        "temperature": 0.5,
+        "top_k": 10,
+        "temperature": 0.1,
         "seed": INIT_SEED,
         "search_type": "sample"
     }
