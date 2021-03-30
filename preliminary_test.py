@@ -27,6 +27,18 @@ def static_primer_set(df, primer_df, GPT2FR, hyperparameters, permutations=1, de
 
     N = hyperparameters["num_shots"]
     NUM_ITERATIONS = 1                  # number of iterations until we print results
+    
+    assert N == 5, "Permutations will not work"
+
+    PERMUTATIONS = [
+                [0, 1, 2, 3, 4],
+                [3, 1, 0, 4, 2],
+                [4, 2, 1, 0, 3],
+                [2, 0, 4, 3, 1],
+                [1, 2, 0, 4, 3],
+                [0, 3, 2, 1, 4],
+                [4, 3, 2, 1, 0]
+            ]
 
     Log = ""
     output_df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "primers", "gpt2_input", "generated_reflection", "beam"] + list(hyperparameters.keys()))
@@ -44,15 +56,17 @@ def static_primer_set(df, primer_df, GPT2FR, hyperparameters, permutations=1, de
             # convert dataframe to list of strings
             examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
                             for _, ex_row in primer_df.iterrows()]
+            examples = np.array(examples)
 
-            for _ in range(permutations):
-                examples = examples[1:] + [examples[0]]
+            for p in range(permutations):
+                #examples = examples[1:] + [examples[0]]
+                examples = examples[PERMUTATIONS[p]]
 
                 # convert row we want to generate a reflection of to a string
                 query_string = GPT2FR.convert_example_to_formatted_string( row["prompt"], row["response"] )
 
                 # generating reflection
-                gpt2_input = "\n\n".join(examples + [query_string])
+                gpt2_input = "\n\n".join(list(examples) + [query_string])
 
                 # generating reflections
                 print("Generating Reflection...")
@@ -192,23 +206,23 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='gpt2', help="Model name")
     parser.add_argument('--debug', action="store_true", default=False)
     args = parser.parse_args()
-
-    hyperparameters = {
-        "num_shots": 5,
-        "seed": [INIT_SEED, INIT_SEED+1, INIT_SEED+2],
-        "search_type": "greedy"
-    }
-
+    
     """
     hyperparameters = {
-        "num_shots": 3,
-        "repetition_penalty": 1.0,
-        "top_k": 50,
-        "temperature": 0.5,
+        "num_shots": 5,
         "seed": INIT_SEED,
         "search_type": "greedy"
     }
     """
+
+    hyperparameters = {
+        "num_shots": 5,
+        "repetition_penalty": 1.0,
+        "top_k": 100,
+        "temperature": 1.0,
+        "seed": INIT_SEED,
+        "search_type": "sample"
+    }
 
     print("\nLoading model...")
     GPT2FR = GPT2ForReflections(model_name=args.model)
@@ -225,6 +239,6 @@ if __name__ == "__main__":
 
     SAVE_DIR = "generated_data"
     #df = perfect_preformance(data_set, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
-    df = static_primer_set(data_set, primer_df, GPT2FR, hyperparameters, permutations=3, debug=args.debug, save_dir=SAVE_DIR)
+    df = static_primer_set(data_set, primer_df, GPT2FR, hyperparameters, permutations=5, debug=args.debug, save_dir=SAVE_DIR)
 
-    df.to_csv(f"{SAVE_DIR}/perfect_preformance_{primer_file}")
+    df.to_csv(f"{SAVE_DIR}/hp_{hyperparameters['search_type']}_highvar_{primer_file}")
