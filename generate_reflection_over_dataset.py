@@ -1,27 +1,8 @@
-from primer_manager import PrimerManager
-from gpt2_for_reflections import GPT2ForReflections
-from rqc import ReflectionQualityClassifier
-
-from helper_functions import *
-
-import numpy as np
-import pandas as pd
-import torch
-import random
-
 from tqdm import tqdm
-import itertools
-import ast
+from helper_functions import log_print
 
-import argparse
-import traceback
+""" This is the function that is doing all of the heavy lifting in the code """
 
-# setting global seed for reproducability
-INIT_SEED = 100
-random.seed(INIT_SEED)
-np.random.seed(INIT_SEED)
-if not INIT_SEED is None:
-    torch.manual_seed(INIT_SEED)
 
 def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
 
@@ -90,7 +71,7 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
                             "prompt": row["prompt"], 
                             "response": row["response"], 
                             "primer_type": primer_type, 
-                            "primers": "\n\n".join(examples),
+                            "primers": "\n\n".join(examples_permuted),
                             "gpt2_input": gpt2_input,
                             "generated_reflection": generated_reflection,
                             "beam": i,
@@ -100,7 +81,7 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
                     # logging output
                     if index % NUM_ITERATIONS == 0:
                         Log += log_print(primer_type)
-                        for i, example in enumerate(examples):
+                        for i, example in enumerate(examples_permuted):
                             Log += log_print(f"{i+1} {example}")
                         
                         Log += log_print(query_string)
@@ -125,87 +106,3 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
         g.write(Log)
 
     return output_df
-
-
-if __name__ == "__main__":
-
-    # parse command line arguments
-    parser = argparse.ArgumentParser(description='Testing Simple Reflection Generation')
-    parser.add_argument('--model', type=str, default='gpt2', help="Model name")
-    parser.add_argument('--debug', action="store_true", default=False)
-    args = parser.parse_args()
-
-    hyperparameters = {
-        "num_shots": 5,
-        "repetition_penalty": 1.0,
-        "top_k": 10,
-        "temperature": 0.1,
-        "seed": INIT_SEED,
-        "search_type": "sample"
-    }
-
-    print("\nLoading model...")
-    GPT2FR = GPT2ForReflections(model_name=args.model)
-
-    print("\nLoading Primers...")
-    #primer_file = "simple_reflections_gpt2.csv"
-    #primer_file = "complex_reflections_gpt2.csv"
-    primer_file = "simple_reflections_human.csv"
-    #primer_file = "complex_reflections_human.csv"
-    primer_df = pd.read_csv(f'static_data/Final Thesis Primer Sets/{primer_file}', index_col=0)
-
-    # getting list of all Types and all Topics
-    Types = set()
-    Topics = set()
-    for index, row in primer_df.iterrows():
-        Types.add(  row["Type"]  )
-        Topics.add( row["Topic"] )
-
-    #print(Types)
-    #print(Topics)
-
-    SAVE_DIR = "generated_data"
-    df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"] + list(hyperparameters.keys()))
-    
-    # doing the "k-fold" cross validation
-    """
-    for Type in tqdm(Types):
-        print("Type:", Type)
-        
-        primer_set = primer_df[ primer_df["Type"] != Type ]
-        data_set = primer_df[ primer_df["Type"] == Type ]
-
-        primer_set = primer_set[["prompt", "response", "reflection"]].reset_index()
-        data_set = data_set[["Type", "Topic", "prompt", "response"]].drop_duplicates().reset_index()
-
-        # actually loading primers
-        Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
-        
-        # running test
-        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
-
-        # saving output
-        df = df.append(output_df, ignore_index=True)
-    
-    df.to_csv(f"{SAVE_DIR}/Type_k_fold_{primer_file}")
-    """
-
-    for Topic in tqdm(Topics):
-        print("Topic:", Topic)
-        
-        primer_set = primer_df[ primer_df["Topic"] != Topic ]
-        data_set = primer_df[ primer_df["Topic"] == Topic ]
-
-        primer_set = primer_set[["prompt", "response", "reflection"]].reset_index()
-        data_set = data_set[["Type", "Topic", "prompt", "response"]].drop_duplicates().reset_index()
-
-        # actually loading primers
-        Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
-        
-        # running test
-        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=5, debug=args.debug, save_dir=SAVE_DIR)
-
-        # saving output
-        df = df.append(output_df, ignore_index=True)
-    
-    df.to_csv(f"{SAVE_DIR}/Topic_k_fold_{primer_file}")
