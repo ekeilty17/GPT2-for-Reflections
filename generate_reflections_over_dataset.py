@@ -1,3 +1,4 @@
+import pandas as pd
 from tqdm import tqdm
 from helper_functions import log_print
 
