@@ -66,11 +66,11 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
 
                 for p in range(permutations):
                     # convert dataframe to list of strings
-                    examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
+                    examples_formatted = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
                                     for _, ex_row in examples.iterrows()]
 
                     # generating reflection
-                    examples_permuted = [examples[i] for i in PERMUTATIONS[p]]
+                    examples_permuted = [examples_formatted[i] for i in PERMUTATIONS[p]]
                     gpt2_input = "\n\n".join(examples_permuted + [query_string])
 
                     # generating reflections
