@@ -42,7 +42,7 @@ class PrimerManager(object):
             similarities.append( (index, float(similarity)) )
         
         similarities = list(sorted(similarities, key=lambda t: t[1]))
-        return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
+        return self.primer_df.loc[ [index for index, _ in similarities[:n]] ]
     
     def get_n_different_examples(self, string, n):
         n = min(n, len(self.primer_df))
@@ -55,7 +55,7 @@ class PrimerManager(object):
             similarities.append( (index, float(similarity)) )
         
         similarities = list(sorted(similarities, key=lambda t: t[1], reverse=True))
-        return self.primer_df.iloc[ [index for index, _ in similarities[:n]] ]
+        return self.primer_df.loc[ [index for index, _ in similarities[:n]] ]
 
     def get_similarity_score(self, string1, string2):
         embedding = self.embed([string1, string2])
