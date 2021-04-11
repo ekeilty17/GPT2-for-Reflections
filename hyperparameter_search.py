@@ -39,7 +39,7 @@ def grid_search(data_set, Primers, GPT2FR, hyperparameters_dict, debug=False, sa
     df = None
     for hyperparameters in hyperparameters_list:
         # running test
-        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=3, save_dir=SAVE_DIR)
+        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=3, debug=debug, save_dir=SAVE_DIR)
 
         # saving output
         if df is None:
@@ -58,14 +58,14 @@ if __name__ == "__main__":
         "repetition_penalty": 1.0,
         "top_k": [0, 10, 100],
         "temperature": [0.01, 0.1, 0.5, 1.0],
-        "seed": seed,
+        "seed": INIT_SEED,
         "search_type": "sample"
     }
 
     df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
 
     print("\nLoading Primers...")
-    primer_df = pd.read_csv('static_data/filtered_golden_primers.csv', index_col=0)
+    primer_df = pd.read_csv('static_data/CAMH Primers/CAMH_primers_categorized.csv', index_col=0)
     Primers = PrimerManager(primer_df, seed=hyperparameters["seed"])
 
     print("\nLoading model...")
@@ -77,6 +77,4 @@ if __name__ == "__main__":
     df = grid_search(df, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
 
     print("\nSaving to csv...")
-    primer_type = "RANDOM" if hyperparameters["random"] else "SIMILAR"
-    df.to_csv(f"{SAVE_DIR}/brute_force_{primer_type}_{hyperparameters['seed']}.csv")
-    #df.to_csv(f"{SAVE_DIR}/brute_force_RANDOM{k}.csv")
+    df.to_csv(f"{SAVE_DIR}/grid_search.csv")
