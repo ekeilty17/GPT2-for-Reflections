@@ -70,8 +70,8 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
                                     for _, ex_row in examples.iterrows()]
 
                     # generating reflection
-                    examples = [examples[i] for i in PERMUTATIONS[p]]
-                    gpt2_input = "\n\n".join(examples + [query_string])
+                    examples_permuted = [examples[i] for i in PERMUTATIONS[p]]
+                    gpt2_input = "\n\n".join(examples_permuted + [query_string])
 
                     # generating reflections
                     print("Generating Reflection...")
