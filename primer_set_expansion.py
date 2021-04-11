@@ -24,6 +24,10 @@ def primer_set_expansion(df, Group_set, group_name, hyperparameters, primer_df, 
         primer_set = primer_df[ primer_df[group_name] <= group ]
         data_set = primer_df[ primer_df[group_name] > group ]
 
+        # primer set is too small
+        if len(primer_set) <= hyperparameters["num_shots"]:
+            continue
+
         primer_set = primer_set[["prompt", "response", "reflection"]].reset_index()
         data_set = data_set.reset_index()
 
@@ -31,7 +35,7 @@ def primer_set_expansion(df, Group_set, group_name, hyperparameters, primer_df, 
         Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
         
         # running test
-        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, save_dir=SAVE_DIR)
 
         # saving output
         df = df.append(output_df, ignore_index=True)
@@ -61,7 +65,7 @@ if __name__ == "__main__":
     #primer_file = "complex_reflections_gpt2.csv"
     #primer_file = "simple_reflections_human.csv"
     #primer_file = "complex_reflections_human.csv"
-    primer_df = pd.read_csv(f'static_data/{primer_file}', index_col=0)
+    primer_df = pd.read_csv(f'static_data/Final Thesis Primer Sets/{primer_file}', index_col=0)
 
     # getting list of all Types and all Topics
     Types = set()
