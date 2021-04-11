@@ -5,17 +5,13 @@ from rqc import ReflectionQualityClassifier
 from helper_functions import *
 from generate_reflections_over_dataset import generate_reflections_over_dataset
 
+import pandas as pd
 from tqdm import tqdm
 
 import argparse
 import traceback
 
 # setting global seed for reproducability
-import numpy as np
-import pandas as pd
-import torch
-import random
-
 INIT_SEED = 100
 set_global_seeds(INIT_SEED)
 
