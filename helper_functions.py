@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import random
+import argparse
 
 def set_global_seeds(seed):
     random.seed(seed)
@@ -8,6 +9,13 @@ def set_global_seeds(seed):
     if not seed is None:
         torch.manual_seed(seed)
 
+def get_args():
+    # parse command line arguments
+    parser = argparse.ArgumentParser(description='Testing Simple Reflection Generation')
+    parser.add_argument('--model', type=str, default='gpt2', help="Model name")
+    parser.add_argument('--debug', action="store_true", default=False)
+    args = parser.parse_args()
+    return args
 
 def add_column_to_dataframe(df, data, column_name):
     if len(data) > len(df):

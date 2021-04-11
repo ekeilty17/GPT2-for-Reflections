@@ -1,6 +1,7 @@
 import pandas as pd
 from tqdm import tqdm
 from helper_functions import log_print
+import traceback
 
 """ This is the function that is doing all of the heavy lifting in the code """
 

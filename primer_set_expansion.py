@@ -9,7 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 import argparse
-import traceback
+
 
 # setting global seed for reproducability
 INIT_SEED = 100
@@ -41,15 +41,11 @@ def primer_set_expansion(df, Group_set, group_name, hyperparameters, primer_df, 
 
 
 if __name__ == "__main__":
-
-    # parse command line arguments
-    parser = argparse.ArgumentParser(description='Testing Simple Reflection Generation')
-    parser.add_argument('--model', type=str, default='gpt2', help="Model name")
-    parser.add_argument('--debug', action="store_true", default=False)
-    args = parser.parse_args()
+    # parse commandline (helper_functions.py contains code)
+    args = get_args()
 
     hyperparameters = {
-        "num_shots": 3,
+        "num_shots": 5,
         "repetition_penalty": 1.0,
         "top_k": 50,
         "temperature": 0.5,
@@ -79,6 +75,6 @@ if __name__ == "__main__":
 
     SAVE_DIR = "generated_data"
     df = pd.DataFrame(columns=["Type", "Topic", "prompt", "response", "primer_type", "generated_reflection"] + list(hyperparameters.keys()))
-    
+
     df = primer_set_expansion(df, Types,  "Type",  hyperparameters, primer_df, GPT2FR, save_dir=SAVE_DIR)
     #df = primer_set_expansion(df, Topics, "Topic", hyperparameters, primer_df, GPT2FR, save_dir=SAVE_DIR)

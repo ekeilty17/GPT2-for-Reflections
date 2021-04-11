@@ -8,9 +8,6 @@ from generate_reflections_over_dataset import generate_reflections_over_dataset
 import pandas as pd
 from tqdm import tqdm
 
-import argparse
-import traceback
-
 # setting global seed for reproducability
 INIT_SEED = 100
 set_global_seeds(INIT_SEED)
@@ -47,12 +44,8 @@ def leave_one_group_out_cross_validation(df, Group_set, group_name, hyperparamet
 
 
 if __name__ == "__main__":
-
-    # parse command line arguments
-    parser = argparse.ArgumentParser(description='Testing Simple Reflection Generation')
-    parser.add_argument('--model', type=str, default='gpt2', help="Model name")
-    parser.add_argument('--debug', action="store_true", default=False)
-    args = parser.parse_args()
+    # parse commandline (helper_functions.py contains code)
+    args = get_args()
 
     hyperparameters = {
         "num_shots": 5,
