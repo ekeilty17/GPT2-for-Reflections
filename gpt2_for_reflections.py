@@ -166,11 +166,11 @@ if __name__ == "__main__":
 
     # get random prompt-response pair
     import pandas as pd
-    df = pd.read_csv('static_data/filtered_primers.csv', index_col=0)
+    df = pd.read_csv('static_data/CAMH Primers/CAMH_primers_categorized.csv', index_col=0)
 
     # getting primers
     primer_row = df.iloc[0]
-    primer_prompt, primer_response, primer_reflection = primer_row["prompt"], primer_row["response"], primer_row["reflection_human"]
+    primer_prompt, primer_response, primer_reflection = primer_row["prompt"], primer_row["response"], primer_row["reflection"]
     primer_string = GPT2FR.convert_example_to_formatted_string(primer_prompt, primer_response, primer_reflection)
 
     # getting query string

@@ -65,6 +65,8 @@ class PrimerManager(object):
 
 if __name__ == "__main__":
     
+    """ This illustrates how to use the above class """
+
     # test prompt-response
     prompt = "I appreciate you confirming my understanding OK, so smoking is pleasant and relaxing for you Are there other things that are good about smoking? If so, please tell me"
     response = "It  gives me a nice sensation."
@@ -74,12 +76,13 @@ if __name__ == "__main__":
     print()
 
 
-    Primers = PrimerManager()
+    primer_df = pd.read_csv("static_data/Final Thesis Primer Sets/complex_reflections_human.csv", index_col=0)
+    Primers = PrimerManager(primer_df)
     query_string = Primers.get_prompt_response_string(prompt, response)
     
 
     print("Similar Primers")
-    primer_examples = Primers.get_n_best_examples(query_string, 5)
+    primer_examples = Primers.get_n_similar_examples(query_string, 5)
     print(primer_examples)
     print()
 

@@ -50,10 +50,10 @@ if __name__ == "__main__":
 
     hyperparameters = {
         "num_shots": 5,
-        "temperature": 0.175,
+        "temperature": 0.2,
         "repetition_penalty": 1.0,
-        "top_k": 100,
-        "top_p": 0.8,
+        "top_k": 10,
+        "top_p": 1.0,
         "seed": None
     }
 
