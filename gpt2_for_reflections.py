@@ -31,10 +31,11 @@ class GPT2ForReflections(object):
             "temperature": 1.0              # default: 1?
         }
         
-        # store user's hyper
+        # store user's hyperparameters
         self.user_hyperparameters = {} if hyperparameters is None else {k: v for k, v in hyperparameters.items() if k in self.default_hyperparameters}
         
-        # choose the ones we need based on the search type
+        # choose the appropriate hyperparameters we need based on the search type
+        # this function implicitly sets self.hyperparameters
         self.set_search_type(search_type)
 
 

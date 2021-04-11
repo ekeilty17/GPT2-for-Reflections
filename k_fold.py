@@ -23,11 +23,12 @@ np.random.seed(INIT_SEED)
 if not INIT_SEED is None:
     torch.manual_seed(INIT_SEED)
 
-def k_fold(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
+def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
 
     N = hyperparameters["num_shots"]
     NUM_ITERATIONS = 1                  # number of iterations until we print results
 
+    # TODO: implement permutations for any N
     assert N == 5, "Permutations will not work"
 
     PERMUTATIONS = [
@@ -62,16 +63,14 @@ def k_fold(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, sa
                 Log += log_print()
             
             for examples, primer_type in zip([random_examples, similar_examples, different_examples], ["random", "similar", "different"]):
-                examples = np.array(examples)
 
                 for p in range(permutations):
-                    examples = examples[PERMUTATIONS[p]]
-
                     # convert dataframe to list of strings
                     examples = [GPT2FR.convert_example_to_formatted_string( ex_row["prompt"], ex_row["response"], ex_row["reflection"] ) \
                                     for _, ex_row in examples.iterrows()]
 
                     # generating reflection
+                    examples = [examples[i] for i in PERMUTATIONS[p]]
                     gpt2_input = "\n\n".join(examples + [query_string])
 
                     # generating reflections
@@ -153,7 +152,7 @@ if __name__ == "__main__":
     #primer_file = "complex_reflections_gpt2.csv"
     primer_file = "simple_reflections_human.csv"
     #primer_file = "complex_reflections_human.csv"
-    primer_df = pd.read_csv(f'static_data/{primer_file}', index_col=0)
+    primer_df = pd.read_csv(f'static_data/Final Thesis Primer Sets/{primer_file}', index_col=0)
 
     # getting list of all Types and all Topics
     Types = set()
@@ -204,7 +203,7 @@ if __name__ == "__main__":
         Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
         
         # running test
-        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, permutations=5, debug=args.debug, save_dir=SAVE_DIR)
+        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=5, debug=args.debug, save_dir=SAVE_DIR)
 
         # saving output
         df = df.append(output_df, ignore_index=True)

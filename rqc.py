@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 import tensorflow as tf
+from transformers import TFBertForSequenceClassification, BertTokenizer
 from transformers import TFDistilBertForSequenceClassification, DistilBertTokenizer
 
 # hide the loading messages
@@ -26,9 +27,18 @@ class ReflectionQualityClassifier(object):
         ( P(good reflection), P(bad reflection) )
     """
 
-    def __init__(self, path, model_name="distilbert-base-uncased"):
-        self.tokenizer = DistilBertTokenizer.from_pretrained(model_name)
-        self.model = TFDistilBertForSequenceClassification.from_pretrained(model_name)
+    def __init__(self, path, model_name="bert-base-uncased"):
+        self.model_type = model_name.split('-')[0]
+
+        if self.model_type == "bert":
+            self.tokenizer = BertTokenizer.from_pretrained(model_name)
+            self.model = TFBertForSequenceClassification.from_pretrained(model_name)
+        elif self.model_type == "distilbert":
+            self.tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+            self.model = TFDistilBertForSequenceClassification.from_pretrained(model_name)
+        else:
+            raise ValueError(f"Model '{model_name}' either not found or not implemented.")
+
         self.model.load_weights(path)
         #self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         #self.model = self.model.to(self.device)
@@ -51,12 +61,18 @@ class ReflectionQualityClassifier(object):
 
     # map to the expected input to TFBertForSequenceClassification, see here 
     @staticmethod
-    def _to_dict(input_ids, attention_masks, token_type_ids):
-        return {
-                "input_ids": input_ids,
-                "attention_mask": attention_masks,
-                "token_type_ids": token_type_ids,       # don't actually use these, but sometimes they are useful
-            }
+    def _to_dict(input_ids, attention_masks, token_type_ids=None):
+        if token_type_ids is None:
+            return {
+                    "input_ids": input_ids,
+                    "attention_mask": attention_masks
+                }
+        else:
+            return {
+                    "input_ids": input_ids,
+                    "attention_mask": attention_masks,
+                    "token_type_ids": token_type_ids,       # only bert-base needs token-type ids, distilbert doesn't
+                }
 
     def preprocess_input(self, text_a, text_b):
 
@@ -76,14 +92,17 @@ class ReflectionQualityClassifier(object):
                                     truncation = True,              # If the input is too long (> 512) then it just truncates it instead of throwing an error
                                     return_attention_mask = True,   # Construct attn. masks
                                     return_token_type_ids = True,   # sometimes these are necessary
-                                    #return_tensors = 'pt',          # Return pytorch tensors, I think default is TF tensor
+                                    #return_tensors = 'pt',         # Return pytorch tensors, I think default is TF tensor
                                 )
             
             input_ids.append(encoded_dict['input_ids'])
             attention_masks.append(encoded_dict['attention_mask'])
             token_type_ids.append(encoded_dict['token_type_ids'])
 
-        return tf.data.Dataset.from_tensor_slices((input_ids, attention_masks, token_type_ids)).map(self._to_dict)
+        if self.model_type == "bert":
+            return tf.data.Dataset.from_tensor_slices((input_ids, attention_masks, token_type_ids)).map(self._to_dict)
+        else:
+            return tf.data.Dataset.from_tensor_slices((input_ids, attention_masks)).map(self._to_dict)
 
 
     def predict(self, prompts, responses, reflections, batch_size=16):
@@ -119,8 +138,13 @@ if __name__ == "__main__":
     responses = df["response"].values
     reflections = df[df.columns[2]].values
 
-    MODEL_PATH = "../distilbert_model_reflection_extended.08-0.85.hdf5"
-    RQC = ReflectionQualityClassifier(MODEL_PATH)
+    # Old model
+    #MODEL_PATH = "../distilbert_model_reflection_extended.08-0.85.hdf5"
+    #RQC = ReflectionQualityClassifier(MODEL_PATH, model_name="distilbert-base-uncased")
+    
+    MODEL_PATH = "../bert_base_uncased_reflection_v2.1_balanced.08-0.80.hdf5"
+    RQC = ReflectionQualityClassifier(MODEL_PATH, model_name="bert-base-uncased")
+    
     confidence, labels = RQC.predict(prompts, responses, reflections)
     print(confidence)
     print(labels)

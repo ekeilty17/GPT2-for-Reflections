@@ -134,7 +134,7 @@ def perfect_preformance(df, GPT2FR, hyperparameters, debug=False, save_dir="."):
             if index % NUM_ITERATIONS == 0:
                 Log += log_print()
                 Log += log_print("------------------------------")
-                Log += log_print(f"Iteration: {index}")
+                Log += log_print(f"Index: {index}")
                 Log += log_print("------------------------------")
                 Log += log_print()
             
