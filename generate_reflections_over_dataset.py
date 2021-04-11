@@ -6,10 +6,11 @@ import traceback
 """ This is the function that is doing all of the heavy lifting in the code """
 
 
-def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, permutations=1, debug=False, save_dir="."):
+def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, permutations=1, primer_types=["random", "similar", "different"], debug=False, save_dir="."):
 
     N = hyperparameters["num_shots"]
     NUM_ITERATIONS = 1                  # number of iterations until we print results
+    primer_types = list(primer_types)
 
     # TODO: implement permutations for any N
     assert N == 5, "Permutations will not work"
@@ -46,6 +47,8 @@ def generate_reflections_over_dataset(df, Primers, GPT2FR, hyperparameters, perm
                 Log += log_print()
             
             for examples, primer_type in zip([random_examples, similar_examples, different_examples], ["random", "similar", "different"]):
+                if not primer_type in primer_types:
+                    continue
 
                 for p in range(permutations):
                     # convert dataframe to list of strings

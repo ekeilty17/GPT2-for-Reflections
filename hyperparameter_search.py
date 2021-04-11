@@ -39,7 +39,7 @@ def grid_search(data_set, Primers, GPT2FR, hyperparameters_dict, debug=False, sa
     df = None
     for hyperparameters in hyperparameters_list:
         # running test
-        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=3, debug=debug, save_dir=SAVE_DIR)
+        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, permutations=3, primer_types=["random"], debug=debug, save_dir=SAVE_DIR)
 
         # saving output
         if df is None:
@@ -62,11 +62,12 @@ if __name__ == "__main__":
         "search_type": "sample"
     }
 
-    df = pd.read_csv('static_data/filtered_prompt_response_pairs.csv', index_col=0)
-
     print("\nLoading Primers...")
     primer_df = pd.read_csv('static_data/CAMH Primers/CAMH_primers_categorized.csv', index_col=0)
     Primers = PrimerManager(primer_df, seed=hyperparameters["seed"])
+
+    # The dataset and primer set will be the same here
+    df = pd.read_csv('static_data/CAMH Primers/CAMH_primers_categorized.csv', index_col=0)
 
     print("\nLoading model...")
     GPT2FR = GPT2ForReflections(model_name=args.model)
