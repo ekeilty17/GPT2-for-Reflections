@@ -41,7 +41,7 @@ def leave_one_group_out_cross_validation(df, Group_set, group_name, hyperparamet
         Primers = PrimerManager(primer_set, seed=hyperparameters["seed"])
         
         # running test
-        output_df = k_fold(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
+        output_df = generate_reflections_over_dataset(data_set, Primers, GPT2FR, hyperparameters, debug=args.debug, save_dir=SAVE_DIR)
 
         # saving output
         df = df.append(output_df, ignore_index=True)
