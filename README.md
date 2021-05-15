@@ -1,6 +1,6 @@
 # Generating Reflections with GPT-2
 
-This is the complete repository used to complete my undergraduate thesis.
+This is the complete repository used to complete my undergraduate thesis. The full report is given in the repository [here](https://github.com/ekeilty17/GPT2-for-Reflections/blob/main/Primer%20Selection%20Methods%20for%20Generating%20Reflections%20with%20GPT2%20-%20Eric%20Keilty%20Undergraduate%20Thesis%20Report.pdf).
 
 There are 5 types of files/scripts you will find in this repository:
 * Python Classes
